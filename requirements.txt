@@ -1,0 +1,51 @@
+# Python 3.10 requirements for the clinical document processor.
+#
+# Install with:
+#   pip install -r requirements.txt
+#
+# Important:
+# Standard-library modules are listed below as comments only.
+# Do not list them as installable packages, because pip would try to install
+# unrelated third-party packages with the same names.
+
+# -----------------------------
+# External pip dependencies
+# -----------------------------
+numpy
+PyYAML
+requests
+urllib3
+boto3==1.34.149
+botocore
+PyMuPDF
+Pillow
+opencv-python-headless
+pyarrow
+pyiceberg[s3fs,pyarrow]
+
+# -----------------------------
+# Python standard-library modules used by the notebook
+# Included for documentation only; these come with Python 3.10.
+# -----------------------------
+# base64
+# dataclasses
+# datetime
+# difflib
+# io
+# json
+# logging
+# pathlib
+# re
+# subprocess
+# sys
+# tempfile
+# typing
+
+# -----------------------------
+# Runtime-provided dependencies
+# -----------------------------
+# The implementation also imports pyspark and cml.data_v1.
+# In Cloudera AI / CML these are expected to be supplied by the runtime
+# so they are intentionally not installed from this requirements file.
+# pyspark
+# cml.data_v1

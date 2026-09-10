@@ -1,0 +1,142 @@
+# ============================================================
+# Model endpoint
+# ============================================================
+model_base_url: "https://YOUR-MODEL-ENDPOINT"  # OpenAI-compatible model base URL; do not include /chat/completions
+model_name: "Qwen/Qwen2.5-VL-7B-Instruct"  # Model name sent in the API request
+request_timeout_s: 300  # Timeout in seconds for model endpoint calls
+vlm_temperature: 0.0  # Low/zero temperature keeps extraction deterministic
+vlm_max_tokens: 4096  # Maximum output tokens for page transcription/model responses
+
+# ============================================================
+# CDP CLI token generation for model authentication
+# ============================================================
+cdp_workload_name: "YOUR-WORKLOAD"  # CDP workload name used to generate the workload auth token
+cdp_profile: "YOUR-CDP-PROFILE"  # CDP CLI profile used for token generation
+cdpcli_verify_tls: true  # If false, adds --no-verify-tls to the CDP CLI command
+cdpcli_tls_cert_path: null  # If TLS verify is true, optional CA bundle path for CDP CLI via --ca-bundle
+
+# ============================================================
+# Model endpoint TLS
+# ============================================================
+model_tls_verify: true  # If true, verify TLS certificate for model endpoint requests
+model_tls_cert_path: null  # Optional CA bundle path for model endpoint TLS verification
+
+# ============================================================
+# Source and destination storage
+# ============================================================
+source_backend: "ozone"  # Source backend: local or ozone
+source_root: "clinical-raw/incoming"  # Source root folder or Ozone bucket/prefix containing raw documents
+dest_backend: "ozone"  # Destination backend: local or ozone
+dest_root: "clinical-processed/markdown"  # Destination root folder or Ozone bucket/prefix for markdown output
+
+# ============================================================
+# Ozone S3 Gateway connection
+# ============================================================
+ozone_endpoint_url: "https://YOUR-OZONE-S3G-ENDPOINT"  # Ozone S3 Gateway endpoint URL
+ozone_access_key: "YOUR-OZONE-ACCESS-KEY"  # Ozone S3 access key
+ozone_secret_key: "YOUR-OZONE-SECRET-KEY"  # Ozone S3 secret key
+ozone_region: "us-east-1"  # Region used by boto3 for S3 request signing
+ozone_signature_version: "s3v4"  # S3 signature version for Ozone S3 Gateway
+ozone_addressing_style: "path"  # Use path-style addressing for Ozone S3 Gateway compatibility
+
+# ============================================================
+# Ozone S3 Gateway TLS
+# ============================================================
+ozone_tls_verify: true  # If true, verify TLS certificate for Ozone S3 Gateway
+ozone_tls_cert_path: null  # Optional CA bundle path for Ozone S3 Gateway TLS verification
+
+# ============================================================
+# Metadata sink
+# Controls whether metadata is only logged, written to Iceberg, or both.
+# ============================================================
+metadata_sink: both  # console = log metadata only; spark_iceberg = write to Iceberg only; both = log and write to Iceberg
+
+# ============================================================
+# Spark Iceberg metadata table
+# Used when metadata_sink is spark_iceberg or both.
+# The pipeline writes one metadata row per source document and upserts by source_document_name.
+# ============================================================
+spark_data_connection_name: YOUR-DATA-CONNECTION  # Cloudera AI Data Connection used to obtain the Spark session
+
+spark_iceberg_table: clinical.document_metadata  # Iceberg table name used by Spark SQL MERGE INTO
+
+spark_iceberg_create_table_if_missing: true  # true = create the Iceberg table if it does not exist; false = fail if missing
+
+spark_iceberg_table_location: null  # Optional physical table location; null = use the Spark/Iceberg catalog default warehouse location
+
+spark_iceberg_bucket_count: 64  # Number of Iceberg buckets for source_document_name; helps distribute ~2M metadata rows for upsert workload
+
+spark_iceberg_batch_size: 1000  # Number of metadata rows collected before each Spark MERGE/upsert into Iceberg
+
+# ============================================================
+# Page rendering resolutions
+# ============================================================
+res_judge_px: 1400  # Render size for handwriting classification pass
+res_transcribe_px: 2200  # Render size for page transcription and routing pass
+res_refine_px: 3500  # Render size for high-resolution checkbox refinement crops
+
+# ============================================================
+# Checkbox detection and checked-state extraction
+# ============================================================
+checkbox_review_threshold: 20  # Add review remark when checkbox count exceeds this threshold
+checkbox_bands: 4  # Fallback horizontal bands when checkbox targets exist but OpenCV finds no boxes
+checkbox_band_overlap: 0.1  # Overlap ratio between fallback checkbox bands
+checkbox_label_match_threshold: 0.76  # Minimum label similarity needed to flip a checkbox to [x]
+checkbox_debug: false  # If true, log detailed checkbox crop responses and matching diagnostics
+
+# ============================================================
+# Page routing
+# ============================================================
+page_router_enabled: true  # If true, classify page before choosing checkbox/general prompt
+page_router_debug: false  # If true, log detailed router decisions and raw router response
+route_dense_checkbox_threshold: 25  # Route as checkbox form if visual/router checkbox signal is this high
+route_mixed_checkbox_threshold: 8  # Route mixed pages as checkbox form when checkbox signal reaches this threshold
+
+# ============================================================
+# Page routing guardrails
+# ============================================================
+transcribe_retry_on_guard: true  # Retry with general prompt if checkbox hallucination guard triggers
+transcribe_debug: false  # If true, log additional transcription debug details
+checkbox_explosion_low_visual_limit: 20  # Low visual checkbox count threshold for hallucination guard
+checkbox_explosion_low_visual_md_limit: 50  # Suspicious markdown checkbox count when visual count is low
+checkbox_explosion_ratio: 3.0  # Suspicious markdown-to-visual checkbox ratio for guardrail
+checkbox_explosion_abs_margin: 30  # Minimum absolute checkbox-count gap before ratio guard matters
+repetition_guard_threshold: 0.35  # Threshold for detecting repeated/loop-like transcription output
+
+# ============================================================
+# Identity resolver
+# ============================================================
+identity_resolver_enabled: true  # If true, extract patient identity metadata after page extraction
+identity_resolver_max_chars: 30000  # Maximum extracted text characters sent to identity resolver
+identity_resolver_max_tokens: 800  # Maximum output tokens for identity resolver JSON response
+identity_resolver_debug: false  # If true, log raw identity resolver output
+
+# ============================================================
+# Console logging
+# ============================================================
+console_summary_only: false  # If true, keep notebook/console output compact for large batches
+console_progress_every_n_files: 1  # Print progress after every N files; 0 disables periodic progress
+console_log_metadata_full: false  # If true, print full metadata JSON to console
+
+# ============================================================
+# Pipeline log upload to Ozone
+# ============================================================
+log_to_ozone: true  # If true, write detailed pipeline log to Ozone at end of run
+log_ozone_root: "pipeline-logs/clinical-document-processor"  # Ozone bucket/prefix where pipeline log files are written
+log_file_prefix: "data_extraction_log"  # Prefix for generated pipeline log filenames
+
+# ============================================================
+# Supported document types
+# ============================================================
+supported_document_types:  # Document type tokens recognized from source filenames
+  - "EXTREF"
+  - "EXTDOCPL"
+  - "GENE"
+
+# ============================================================
+# Supported file extensions
+# ============================================================
+supported_file_extensions:  # File extensions the pipeline will process from the source location
+  - ".pdf"
+  - ".tif"
+  - ".tiff"
